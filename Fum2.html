@@ -80,16 +80,12 @@
         button:hover {
             background-color: #6AA8E6;
         }
-        #output {
+        #output, #tab2Output {
             margin-top: 20px;
             text-align: center;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
         }
         .confirmation-message {
             background-color: green;
@@ -154,9 +150,11 @@
         }
         #tab2 table {
             border-collapse: collapse;
+            margin: 0 auto;
         }
         #tab2 td {
             text-align: left;
+            padding: 10px 0;
         }
         #tab2 .col1 {
             width: 100px;
@@ -178,13 +176,13 @@
             box-sizing: border-box;
         }
         #tab2 .select2 {
-            width: 40px;
+            width: 50px;
             height: 36px;
             box-sizing: border-box;
         }
         #tab2 button {
-            margin-top: 40px;
-            width: auto;
+            margin-top: 20px;
+            width: 200px;
             background-color: blue;
             color: white;
             padding: 8px;
@@ -212,20 +210,43 @@
         .modal-content {
             background-color: white;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             text-align: center;
-            max-width: 300px;
+            max-width: 400px;
             width: 90%;
         }
         .modal-content p {
-            margin: 0;
-            font-size: 16px;
+            margin: 0 0 20px;
+            font-size: 18px;
             color: #333;
         }
         .modal-content.fade-out {
             opacity: 0;
             transition: opacity 1s ease-out;
+        }
+        .modal-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .modal-button.yes, .modal-button.accept {
+            background-color: #007bff;
+            color: white;
+        }
+        .modal-button.yes:hover, .modal-button.accept:hover {
+            background-color: #0056b3;
+        }
+        .modal-button.no, .modal-button.cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+        .modal-button.no:hover, .modal-button.cancel:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -235,7 +256,7 @@
     <div class="tab-container">
         <div class="tab-buttons">
             <button class="tab-button active" onclick="openTab('tab1')">Informes</button>
-            <button class="tab-button" onclick="openTab('tab2')">Blanqueo de password</button>
+            <button class="tab-button" onclick="openTab('tab2')">Blanqueo de contraseña</button>
         </div>
         <div id="tab1" class="tab-content active">
             <table>
@@ -263,7 +284,7 @@
                 </tr>
                 <tr>
                     <td>●</td>
-                    <td><button>Inicializar BD</button></td>
+                    <td><button id="inicializarBD">Inicializar BD</button></td>
                 </tr>
             </table>
             <div id="output"></div>
@@ -278,35 +299,72 @@
                 <tr>
                     <td class="col1">
                         <select class="select1" id="torreSelectTab2">
-                            <option>1920</option>
-                            <option>1960</option>
+                            <option value="1920">1920</option>
+                            <option value="1960">1960</option>
                         </select>
                     </td>
                     <td class="col2">
-                        <input type="text" class="input1" id="piso">
+                        <input type="text" class="input1" id="piso" placeholder="Piso">
                     </td>
                     <td class="col3">
                         <select class="select2" id="deptoSelect">
-                            <option>A</option>
-                            <option>B</option>
-                            <option>C</option>
-                            <option>D</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
                         </select>
                     </td>
                 </tr>
             </table>
-            <button><b>Click para blanquear la password</b></button>
+            <button id="resetPassword">Blanquear contraseña</button>
             <div id="tab2Output"></div>
         </div>
     </div>
 
+    <!-- Modal para mensajes -->
     <div id="messageModal" class="modal">
         <div class="modal-content">
             <p id="modalMessage"></p>
         </div>
     </div>
 
+    <!-- Modal para confirmar borrar hoja -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <p>¿Deseas borrar la hoja?</p>
+            <button class="modal-button yes" onclick="handleConfirmResponse(true)">Sí</button>
+            <button class="modal-button no" onclick="handleConfirmResponse(false)">No</button>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar inicialización -->
+    <div id="initModal" class="modal">
+        <div class="modal-content">
+            <p id="initMessage"></p>
+            <button class="modal-button accept" onclick="handleInitResponse(true)">Aceptar</button>
+            <button class="modal-button cancel" onclick="handleInitResponse(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar blanqueo de contraseña -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <p id="resetMessage"></p>
+            <button class="modal-button accept" onclick="handleResetResponse(true)">Aceptar</button>
+            <button class="modal-button cancel" onclick="handleResetResponse(false)">Cancelar</button>
+        </div>
+    </div>
+
     <script>
+        // Definir la URL del script una sola vez
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkwHM0foQgB1h6aCkDhUq5FG0luQLYZ16y7kRUY49qeF3fSn2no15G0OhaRrfN1adkdg/exec";
+
+        let currentTextTable = "";
+        let currentSheetName = "";
+        let currentClearRange = "";
+        let currentTorre = "";
+        let currentResetData = null;
+
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
@@ -314,8 +372,8 @@
             document.querySelector(`.tab-button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
 
-        function showMessage(message, type) {
-            const outputDiv = document.getElementById("output");
+        function showMessage(message, type, outputId = "output") {
+            const outputDiv = document.getElementById(outputId);
             const messageDiv = document.createElement("div");
             messageDiv.className = type === "success" ? "confirmation-message" : "error-message";
             messageDiv.textContent = message;
@@ -332,7 +390,7 @@
 
         function showModalMessage(message) {
             const modal = document.getElementById("messageModal");
-            const modalContent = document.querySelector(".modal-content");
+            const modalContent = document.querySelector("#messageModal .modal-content");
             const modalMessage = document.getElementById("modalMessage");
             modalMessage.textContent = message;
             modal.style.display = "flex";
@@ -344,7 +402,128 @@
                     modal.style.display = "none";
                     modalContent.classList.remove("fade-out");
                 }, 1000);
-            }, 4000);
+            }, 2500); // Reducido de 4000ms a 2500ms
+        }
+
+        function showConfirmModal(textTable, sheetName, clearRange) {
+            currentTextTable = textTable;
+            currentSheetName = sheetName;
+            currentClearRange = clearRange;
+            const modal = document.getElementById("confirmModal");
+            modal.style.display = "flex";
+        }
+
+        function showInitModal(torre) {
+            currentTorre = torre;
+            const modal = document.getElementById("initModal");
+            const modalMessage = document.getElementById("initMessage");
+            modalMessage.textContent = `Confirma Inicialización de Torre ${torre}`;
+            modal.style.display = "flex";
+        }
+
+        function showResetModal(torre, piso, depto) {
+            currentResetData = { torre, piso, depto };
+            const modal = document.getElementById("resetModal");
+            const modalMessage = document.getElementById("resetMessage");
+            modalMessage.textContent = `¿Confirmar blanqueo de contraseña para ${torre}_${piso}_${depto}?`;
+            modal.style.display = "flex";
+        }
+
+        async function handleConfirmResponse(shouldClear) {
+            const modal = document.getElementById("confirmModal");
+            modal.style.display = "none";
+
+            const params = new URLSearchParams({
+                action: "copyToSheet",
+                sheetName: currentSheetName,
+                clearRange: currentClearRange,
+                shouldClear: shouldClear,
+                data: currentTextTable
+            });
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: params
+                });
+                const result = await response.text();
+
+                if (result.startsWith("Error")) {
+                    showMessage(result, "error");
+                    return;
+                }
+
+                showMessage("Tabla copiada a la hoja", "success");
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, "error");
+            }
+        }
+
+        async function handleInitResponse(accept) {
+            const modal = document.getElementById("initModal");
+            modal.style.display = "none";
+
+            if (!accept) {
+                return;
+            }
+
+            const params = new URLSearchParams({
+                action: "initializeDB",
+                torre: currentTorre
+            });
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: params
+                });
+                const result = await response.text();
+
+                if (result.startsWith("Error")) {
+                    showMessage(result, "error");
+                    return;
+                }
+
+                showMessage(result, "success");
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, "error");
+            }
+        }
+
+        async function handleResetResponse(accept) {
+            const modal = document.getElementById("resetModal");
+            modal.style.display = "none";
+
+            if (!accept) {
+                return;
+            }
+
+            const { torre, piso, depto } = currentResetData;
+            const params = new URLSearchParams({
+                action: "resetPassword",
+                torre: torre,
+                piso: piso,
+                depto: depto
+            });
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: params
+                });
+                const result = await response.text();
+
+                if (result.startsWith("Error")) {
+                    showMessage(result, "error", "tab2Output");
+                    return;
+                }
+
+                showMessage(result, "success", "tab2Output");
+                // Vaciar el input de piso tras el blanqueo exitoso
+                document.getElementById("piso").value = "";
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, "error", "tab2Output");
+            }
         }
 
         // Botón "Informe para el fumigador"
@@ -352,8 +531,9 @@
             const torre = document.getElementById("torreSelect").value;
             const columns = "B,C,D,F";
             const condition = `B=${torre} AND E=TRUE`;
-            const url = "https://script.google.com/macros/s/AKfycbzkwHM0foQgB1h6aCkDhUq5FG0luQLYZ16y7kRUY49qeF3fSn2no15G0OhaRrfN1adkdg/exec" +
-                        `?columns=${encodeURIComponent(columns)}&condition=${encodeURIComponent(condition)}`;
+            const sheetName = "para Fumigador";
+            const clearRange = "A1:E";
+            const url = `${SCRIPT_URL}?columns=${encodeURIComponent(columns)}&condition=${encodeURIComponent(condition)}`;
 
             try {
                 const response = await fetch(url);
@@ -371,6 +551,7 @@
 
                 await navigator.clipboard.writeText(textTable);
                 showMessage("Tabla copiada al portapapeles", "success");
+                showConfirmModal(textTable, sheetName, clearRange);
             } catch (error) {
                 showMessage(`Error: ${error.message}`, "error");
             }
@@ -381,8 +562,9 @@
             const torre = document.getElementById("torreSelect").value;
             const columns = "B,C,D,F,E,G";
             const condition = `B=${torre}`;
-            const url = "https://script.google.com/macros/s/AKfycbzkwHM0foQgB1h6aCkDhUq5FG0luQLYZ16y7kRUY49qeF3fSn2no15G0OhaRrfN1adkdg/exec" +
-                        `?columns=${encodeURIComponent(columns)}&condition=${encodeURIComponent(condition)}`;
+            const sheetName = "Info completo";
+            const clearRange = "A1:F";
+            const url = `${SCRIPT_URL}?columns=${encodeURIComponent(columns)}&condition=${encodeURIComponent(condition)}`;
 
             try {
                 const response = await fetch(url);
@@ -400,9 +582,32 @@
 
                 await navigator.clipboard.writeText(textTable);
                 showMessage("Tabla copiada al portapapeles", "success");
+                showConfirmModal(textTable, sheetName, clearRange);
             } catch (error) {
                 showMessage(`Error: ${error.message}`, "error");
             }
+        });
+
+        // Botón "Inicializar BD"
+        document.getElementById("inicializarBD").addEventListener("click", async () => {
+            const torre = document.getElementById("torreSelect").value;
+            showInitModal(torre);
+        });
+
+        // Botón "Blanquear contraseña"
+        document.getElementById("resetPassword").addEventListener("click", () => {
+            const torre = document.getElementById("torreSelectTab2").value;
+            const piso = document.getElementById("piso").value.trim();
+            const depto = document.getElementById("deptoSelect").value;
+
+            // Validar piso en el cliente
+            const pisoNum = Number(piso);
+            if (!piso || !Number.isInteger(pisoNum) || pisoNum < 0 || pisoNum > 15) {
+                showMessage("Piso inválido: debe ser un número entero entre 0 y 15", "error", "tab2Output");
+                return;
+            }
+
+            showResetModal(torre, piso, depto);
         });
     </script>
 </body>
