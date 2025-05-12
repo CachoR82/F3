@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservas para Fumigación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 16px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            table-layout: fixed;
+        }
+        td {
+            vertical-align: top;
+            padding: 0;
+        }
+        #tablaSuperior {
+            width: 230px;
+        }
+        #tablaSuperior td:nth-child(1) {
+            width: 66px;
+        }
+        #tablaSuperior td:nth-child(2) {
+            width: 65px;
+        }
+        #tablaSuperior td:nth-child(3) {
+            width: 92px;
+        }
+        #contenedorInferior {
+            width: 224px;
+        }
+        #contenedorInferior td:nth-child(1) {
+            width: 100px;
+        }
+        #contenedorInferior td:nth-child(2) {
+            width: 124px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], select, input[type="password"] {
+            padding: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #piso {
+            width: 45px;
+        }
+        select#depto {
+            width: 50px;
+        }
+        select#torre {
+            width: 70px;
+            font-size: 14px;
+            background-color: blue;
+            color: white;
+            padding: 0 0 0 0px;
+        }
+        input[type="text"]#comentarios {
+            padding: 5px;
+            font-size: 14px;
+            width: 120px;
+            box-sizing: border-box;
+        }
+        input[type="password"] {
+            width: 100%;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #tablaSuperiorWrapper button {
+            width: 40%;
+        }
+        #contenedorInferiorWrapper button {
+            width: 40%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        hr {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .mensaje {
+            font-size: 14px;
+            padding: 10px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 5px;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        .mensaje.error {
+            color: red;
+            background-color: rgba(255, 255, 192, 0.9);
+            border: 1px solid red;
+        }
+        .mensaje.exito {
+            color: green;
+            background-color: rgba(192, 255, 192, 0.9);
+            border: 1px solid green;
+        }
+        .mensaje.progreso {
+            color: red; /* Cambiado a rojo para mayor atención */
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+        }
+        .mensaje.oculto {
+            opacity: 0;
+        }
+        .mensaje-clave {
+            background-color: #f8f8f8;
+            color: black;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+            max-width: 230px;
+            margin-top: 5px;
+            user-select: none;
+            pointer-events: none;
+            display: none;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 42px;
+        }
+        .form-row label {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reservas para Fumigación</h1>
+    <div class="form-row">
+        <label for="torre">Torre</label>
+        <select id="torre" name="torre" required>
+            <option value="1920" selected>1920</option>
+            <option value="1960">1960</option>
+        </select>
+    </div>
+
+    <div id="tablaSuperiorWrapper">
+        <table id="tablaSuperior">
+            <tr>
+                <td><label for="piso">Piso</label></td>
+                <td><label for="depto">Depto</label></td>
+                <td><label for="clave">Password</label></td>
+            </tr>
+            <tr>
+                <td><input type="number" id="piso" name="piso" min="0" max="15" required></td>
+                <td>
+                    <select id="depto" name="depto" required>
+                        <option value="A" selected>A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </td>
+                <td><input type="password" id="clave" name="clave" required></td>
+            </tr>
+        </table>
+        <button type="button" id="botonBuscar">Buscar</button>
+        <div id="mensajeClave" class="mensaje-clave">
+            Esta contraseña es personal y sirve para modificar datos: ¡No la pierda!
+        </div>
+    </div>
+
+    <div class="hidden" id="contenedorInferiorWrapper">
+        <hr>
+        <table id="contenedorInferior">
+            <tr>
+                <td>
+                    <label for="servicio">Servicio</label>
+                    <input type="checkbox" id="servicio" name="servicio">
+                </td>
+                <td>
+                    <label for="comentarios">Comentarios</label>
+                    <input type="text" id="comentarios" name="comentarios">
+                </td>
+            </tr>
+        </table>
+        <button type="button" id="botonGuardar">Guardar</button>
+    </div>
+
+    <div id="mensajeContenedor"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpeUM3GixcYZQY5RiK-CXjcg1ELq7V7eGvgaqsQqQIlwqHwisGWv1JfonQt7inOrlx/exec';
+
+        // Función para mostrar mensajes
+        function mostrarMensaje(texto, duracion, tipo = 'error') {
+            const contenedor = document.getElementById("mensajeContenedor");
+            const mensaje = document.createElement("div");
+            mensaje.className = "mensaje";
+            mensaje.classList.add(tipo); // Puede ser 'error', 'exito' o 'progreso'
+            mensaje.textContent = texto;
+            contenedor.appendChild(mensaje);
+
+            setTimeout(() => {
+                mensaje.classList.add("oculto");
+                setTimeout(() => contenedor.removeChild(mensaje), 500);
+            }, duracion);
+        }
+
+        // Obtener el valor de TORRE_NUMERO del selector
+        function getTorreNumero() {
+            return document.getElementById("torre").value;
+        }
+
+        // Ocultar la parte inferior y limpiar campos al recibir el foco
+        document.getElementById("piso").addEventListener("focus", function() {
+            document.getElementById("contenedorInferiorWrapper").classList.add("hidden");
+            document.getElementById("servicio").checked = false;
+            document.getElementById("comentarios").value = "";
+        });
+
+        document.getElementById("depto").addEventListener("focus", function() {
+            document.getElementById("contenedorInferiorWrapper").classList.add("hidden");
+            document.getElementById("servicio").checked = false;
+            document.getElementById("comentarios").value = "";
+        });
+
+        document.getElementById("clave").addEventListener("focus", function() {
+            document.getElementById("contenedorInferiorWrapper").classList.add("hidden");
+            document.getElementById("servicio").checked = false;
+            document.getElementById("comentarios").value = "";
+        });
+
+        // Añadir evento al selector de torre para ocultar contenedor inferior al cambiar
+        document.getElementById("torre").addEventListener("change", function() {
+            document.getElementById("contenedorInferiorWrapper").classList.add("hidden");
+            document.getElementById("servicio").checked = false;
+            document.getElementById("comentarios").value = "";
+        });
+
+        // Mostrar mensaje debajo del botón Buscar
+        window.addEventListener("DOMContentLoaded", () => {
+            const claveInput = document.getElementById("clave");
+            const mensajeClave = document.getElementById("mensajeClave");
+
+            if (!claveInput) {
+                console.error("Error: No se encontró el elemento con id 'clave'");
+                return;
+            }
+            if (!mensajeClave) {
+                console.error("Error: No se encontró el elemento con id 'mensajeClave'");
+                return;
+            }
+
+            claveInput.addEventListener("focus", () => {
+                if (claveInput.value.trim() === "") {
+                    mensajeClave.style.display = "block";
+                } else {
+                    mensajeClave.style.display = "none";
+                }
+            });
+
+            claveInput.addEventListener("input", () => {
+                if (claveInput.value.trim() === "") {
+                    mensajeClave.style.display = "block";
+                } else {
+                    mensajeClave.style.display = "none";
+                }
+            });
+
+            claveInput.addEventListener("blur", () => {
+                mensajeClave.style.display = "none";
+            });
+        });
+
+        // Función buscar
+        async function buscar() {
+            const torre = document.getElementById("torre").value;
+            const pisoInput = document.getElementById("piso");
+            const pisoValor = pisoInput.value.trim();
+            const depto = document.getElementById("depto").value;
+            const contraseña = document.getElementById("clave").value.trim();
+            const contenedorInferior = document.getElementById("contenedorInferiorWrapper");
+            const servicioCheckbox = document.getElementById("servicio");
+            const comentariosInput = document.getElementById("comentarios");
+
+            // Validaciones
+            if (pisoValor === "") {
+                mostrarMensaje("El campo Piso no puede estar vacío.", 2000, 'error');
+                return;
+            }
+            if (contraseña === "") {
+                mostrarMensaje("El campo Password no puede estar vacío.", 2000, 'error');
+                return;
+            }
+            if (!/^\d+$/.test(pisoValor)) {
+                mostrarMensaje("El campo Piso debe ser un número entero.", 2000, 'error');
+                return;
+            }
+            const pisoNumero = parseInt(pisoValor);
+            if (pisoNumero < 0 || pisoNumero > 15) {
+                mostrarMensaje("El Piso debe estar entre 0 y 15.", 2000, 'error');
+                return;
+            }
+
+            // Construir la clave
+            const clave = `${torre}_${pisoNumero}_${depto}`;
+
+            try {
+                mostrarMensaje("Conectando con el servidor...", 3000, 'progreso'); // Duración aumentada a 3000 ms
+                const response = await fetch(`${SCRIPT_URL}?action=login&clave=${encodeURIComponent(clave)}&contraseña=${encodeURIComponent(contraseña)}`);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                const result = await response.json();
+
+                if (result.error) {
+                    mostrarMensaje(result.error, 2000, 'error');
+                    contenedorInferior.classList.add("hidden");
+                } else {
+                    contenedorInferior.classList.remove("hidden");
+                    servicioCheckbox.checked = result.servicio === true || result.servicio === 'true';
+                    comentariosInput.value = result.comentario || '';
+                }
+            } catch (error) {
+                mostrarMensaje("Error al conectar con el servidor.", 2000, 'error');
+                contenedorInferior.classList.add("hidden");
+            }
+        }
+
+        // Función guardar
+        async function guardar() {
+            const torre = document.getElementById("torre").value;
+            const pisoInput = document.getElementById("piso");
+            const pisoValor = pisoInput.value.trim();
+            const depto = document.getElementById("depto").value;
+            const contraseñaInput = document.getElementById("clave");
+            const contraseña = contraseñaInput.value.trim();
+            const servicioCheckbox = document.getElementById("servicio");
+            const comentariosInput = document.getElementById("comentarios");
+            const contenedorInferior = document.getElementById("contenedorInferiorWrapper");
+
+            // Validaciones
+            if (pisoValor === "") {
+                mostrarMensaje("El campo Piso no puede estar vacío.", 2000, 'error');
+                return;
+            }
+            if (contraseña === "") {
+                mostrarMensaje("El campo Password no puede estar vacío.", 2000, 'error');
+                return;
+            }
+            if (!/^\d+$/.test(pisoValor)) {
+                mostrarMensaje("El campo Piso debe ser un número entero.", 2000, 'error');
+                return;
+            }
+            const pisoNumero = parseInt(pisoValor);
+            if (pisoNumero < 0 || pisoNumero > 15) {
+                mostrarMensaje("El Piso debe estar entre 0 y 15.", 2000, 'error');
+                return;
+            }
+
+            // Construir la clave
+            const clave = `${torre}_${pisoNumero}_${depto}`;
+            const servicio = servicioCheckbox.checked;
+            
+            // Verificar estado del checkbox y limpiar comentarios si es necesario
+            let comentario = comentariosInput.value.trim();
+            if (!servicio) {
+                comentario = ''; // Limpiar comentarios si el servicio no está marcado
+                comentariosInput.value = ''; // Actualizar el campo visualmente
+            }
+
+            try {
+                mostrarMensaje("Guardando datos...", 3000, 'progreso'); // Duración aumentada a 3000 ms
+                const response = await fetch(`${SCRIPT_URL}?action=saveData&clave=${encodeURIComponent(clave)}&contraseña=${encodeURIComponent(contraseña)}&servicio=${encodeURIComponent(servicio)}&comentario=${encodeURIComponent(comentario)}`);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                const result = await response.json();
+
+                if (result.error) {
+                    mostrarMensaje(result.error, 2000, 'error');
+                } else {
+                    mostrarMensaje("Datos guardados exitosamente.", 2000, 'exito');
+                    // Limpiar campos y ocultar contenedor inferior
+                    servicioCheckbox.checked = false;
+                    comentariosInput.value = '';
+                    contraseñaInput.value = ''; // Limpiar el campo de contraseña
+                    contenedorInferior.classList.add("hidden");
+                }
+            } catch (error) {
+                mostrarMensaje("Error al guardar los datos.", 2000, 'error');
+            }
+        }
+
+        // Asignar eventos a los botones
+        document.getElementById("botonBuscar").addEventListener("click", function() {
+            buscar();
+        });
+
+        document.getElementById("botonGuardar").addEventListener("click", function() {
+            guardar();
+        });
+    </script>
+</body>
+</html>
