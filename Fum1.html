@@ -131,7 +131,7 @@
             border: 1px solid green;
         }
         .mensaje.progreso {
-            color: red; /* Cambiado a rojo para mayor atención */
+            color: red;
             background-color: rgba(255, 255, 255, 0.9);
             border: 1px solid #ccc;
         }
@@ -219,7 +219,8 @@
     <div id="mensajeContenedor"></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpeUM3GixcYZQY5RiK-CXjcg1ELq7V7eGvgaqsQqQIlwqHwisGWv1JfonQt7inOrlx/exec';
+        // URL del servidor
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4ocXT17ewP3jP4YGpe-D2pXXh6mwzW5txfeFzE3NEFH-1J-fg3ea9Tvub3vcul6WQJA/exec';
 
         // Función para mostrar mensajes
         function mostrarMensaje(texto, duracion, tipo = 'error') {
@@ -234,11 +235,6 @@
                 mensaje.classList.add("oculto");
                 setTimeout(() => contenedor.removeChild(mensaje), 500);
             }, duracion);
-        }
-
-        // Obtener el valor de TORRE_NUMERO del selector
-        function getTorreNumero() {
-            return document.getElementById("torre").value;
         }
 
         // Ocultar la parte inferior y limpiar campos al recibir el foco
@@ -302,12 +298,13 @@
             });
         });
 
-        // Función buscar
+        // Función para el botón Buscar
         async function buscar() {
-            const torre = document.getElementById("torre").value;
+            // Obtener valores de los campos
+            const torre = document.getElementById("torre").value; // 1920 o 1960
             const pisoInput = document.getElementById("piso");
             const pisoValor = pisoInput.value.trim();
-            const depto = document.getElementById("depto").value;
+            const depto = document.getElementById("depto").value; // A, B, C, D
             const contraseña = document.getElementById("clave").value.trim();
             const contenedorInferior = document.getElementById("contenedorInferiorWrapper");
             const servicioCheckbox = document.getElementById("servicio");
@@ -332,24 +329,33 @@
                 return;
             }
 
-            // Construir la clave
+            // Construir la triple clave (ej. 1920_5_A)
             const clave = `${torre}_${pisoNumero}_${depto}`;
 
             try {
-                mostrarMensaje("Conectando con el servidor...", 3000, 'progreso'); // Duración aumentada a 3000 ms
+                // Mostrar mensaje de progreso
+                mostrarMensaje("Conectando con el servidor...", 3000, 'progreso');
+
+                // Enviar solicitud GET
                 const response = await fetch(`${SCRIPT_URL}?action=login&clave=${encodeURIComponent(clave)}&contraseña=${encodeURIComponent(contraseña)}`);
                 if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                    throw new Error(`Error HTTP: ${response.status}`);
                 }
                 const result = await response.json();
 
-                if (result.error) {
+                // Manejar respuesta
+                if (result.servicio !== undefined && result.comentario !== undefined) {
+                    // Verificación exitosa, mostrar contenedor inferior
+                    contenedorInferior.classList.remove("hidden");
+                    servicioCheckbox.checked = result.servicio === true || result.servicio === 'TRUE';
+                    comentariosInput.value = result.comentario || '';
+                    mostrarMensaje("Datos cargados exitosamente.", 2000, 'exito');
+                } else if (result.error) {
                     mostrarMensaje(result.error, 2000, 'error');
                     contenedorInferior.classList.add("hidden");
                 } else {
-                    contenedorInferior.classList.remove("hidden");
-                    servicioCheckbox.checked = result.servicio === true || result.servicio === 'true';
-                    comentariosInput.value = result.comentario || '';
+                    mostrarMensaje("Respuesta inesperada del servidor.", 2000, 'error');
+                    contenedorInferior.classList.add("hidden");
                 }
             } catch (error) {
                 mostrarMensaje("Error al conectar con el servidor.", 2000, 'error');
@@ -357,79 +363,59 @@
             }
         }
 
-        // Función guardar
+        // Función para el botón Guardar
         async function guardar() {
+            // Obtener valores de los campos
             const torre = document.getElementById("torre").value;
-            const pisoInput = document.getElementById("piso");
-            const pisoValor = pisoInput.value.trim();
+            const piso = document.getElementById("piso").value.trim();
             const depto = document.getElementById("depto").value;
-            const contraseñaInput = document.getElementById("clave");
-            const contraseña = contraseñaInput.value.trim();
-            const servicioCheckbox = document.getElementById("servicio");
-            const comentariosInput = document.getElementById("comentarios");
+            const contraseña = document.getElementById("clave").value.trim();
+            const servicio = document.getElementById("servicio").checked;
+            let comentario = document.getElementById("comentarios").value.trim();
             const contenedorInferior = document.getElementById("contenedorInferiorWrapper");
 
-            // Validaciones
-            if (pisoValor === "") {
-                mostrarMensaje("El campo Piso no puede estar vacío.", 2000, 'error');
-                return;
-            }
-            if (contraseña === "") {
-                mostrarMensaje("El campo Password no puede estar vacío.", 2000, 'error');
-                return;
-            }
-            if (!/^\d+$/.test(pisoValor)) {
-                mostrarMensaje("El campo Piso debe ser un número entero.", 2000, 'error');
-                return;
-            }
-            const pisoNumero = parseInt(pisoValor);
-            if (pisoNumero < 0 || pisoNumero > 15) {
-                mostrarMensaje("El Piso debe estar entre 0 y 15.", 2000, 'error');
-                return;
+            // Si el checkbox es FALSE, comentario debe ser vacío
+            if (!servicio) {
+                comentario = '';
             }
 
-            // Construir la clave
-            const clave = `${torre}_${pisoNumero}_${depto}`;
-            const servicio = servicioCheckbox.checked;
-            
-            // Verificar estado del checkbox y limpiar comentarios si es necesario
-            let comentario = comentariosInput.value.trim();
-            if (!servicio) {
-                comentario = ''; // Limpiar comentarios si el servicio no está marcado
-                comentariosInput.value = ''; // Actualizar el campo visualmente
-            }
+            // Construir la triple clave
+            const clave = `${torre}_${piso}_${depto}`;
 
             try {
-                mostrarMensaje("Guardando datos...", 3000, 'progreso'); // Duración aumentada a 3000 ms
-                const response = await fetch(`${SCRIPT_URL}?action=saveData&clave=${encodeURIComponent(clave)}&contraseña=${encodeURIComponent(contraseña)}&servicio=${encodeURIComponent(servicio)}&comentario=${encodeURIComponent(comentario)}`);
+                // Mostrar mensaje de progreso
+                mostrarMensaje("Guardando datos...", 3000, 'progreso');
+
+                // Enviar solicitud GET
+                const response = await fetch(`${SCRIPT_URL}?action=save&clave=${encodeURIComponent(clave)}&contraseña=${encodeURIComponent(contraseña)}&servicio=${servicio}&comentario=${encodeURIComponent(comentario)}`);
                 if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                    throw new Error(`Error HTTP: ${response.status}`);
                 }
                 const result = await response.json();
 
-                if (result.error) {
+                // Manejar respuesta
+                if (result.status === 'OK') {
+                    mostrarMensaje("Datos guardados exitosamente.", 2000, 'exito');
+                    // Resetear formulario
+                    document.getElementById("piso").value = '';
+                    document.getElementById("depto").value = 'A';
+                    document.getElementById("clave").value = '';
+                    document.getElementById("servicio").checked = false;
+                    document.getElementById("comentarios").value = '';
+                    contenedorInferior.classList.add("hidden");
+                } else if (result.error) {
                     mostrarMensaje(result.error, 2000, 'error');
                 } else {
-                    mostrarMensaje("Datos guardados exitosamente.", 2000, 'exito');
-                    // Limpiar campos y ocultar contenedor inferior
-                    servicioCheckbox.checked = false;
-                    comentariosInput.value = '';
-                    contraseñaInput.value = ''; // Limpiar el campo de contraseña
-                    contenedorInferior.classList.add("hidden");
+                    mostrarMensaje("Respuesta inesperada del servidor.", 2000, 'error');
                 }
             } catch (error) {
-                mostrarMensaje("Error al guardar los datos.", 2000, 'error');
+                mostrarMensaje("Error al conectar con el servidor.", 2000, 'error');
             }
         }
 
         // Asignar eventos a los botones
-        document.getElementById("botonBuscar").addEventListener("click", function() {
-            buscar();
-        });
-
-        document.getElementById("botonGuardar").addEventListener("click", function() {
-            guardar();
-        });
+        document.getElementById("botonBuscar").addEventListener("click", buscar);
+        document.getElementById("botonGuardar").addEventListener("click", guardar);
     </script>
 </body>
 </html>
