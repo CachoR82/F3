@@ -529,7 +529,7 @@
         // Botón "Informe para el fumigador"
         document.getElementById("generarInformeFumigador").addEventListener("click", async () => {
             const torre = document.getElementById("torreSelect").value;
-            const columns = "B,C,D,F";
+            const columns = "B,C,D,F,H";
             const condition = `B=${torre} AND E=TRUE`;
             const sheetName = "para Fumigador";
             const clearRange = "A1:E";
